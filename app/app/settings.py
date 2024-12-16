@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "recipe",
     "core",
     'rest_framework',
     'rest_framework.authtoken',
