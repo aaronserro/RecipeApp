@@ -60,11 +60,12 @@ class PrivateRecipeApiTests(TestCase):
 
     def test_recipe_list_limited_to_user(self):
         """Test list of recipies is limited to one auth user"""
-        create_recipe(user=self.user)
         new_user = get_user_model().objects.create_user(
             'other@example.com',
             'testpassword123'
         )
+        create_recipe(user=self.user)
+
         create_recipe(user=new_user)
         res = self.client.get(RECIPES_URL)
 
