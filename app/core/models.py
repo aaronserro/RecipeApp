@@ -44,6 +44,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 # Create your models here.
 
 
+class Tag(models.Model):
+    """Tag for Filtering Recipe"""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(  # Sets up a relationship between this model and another
+        settings.AUTH_USER_MODEL,  # HardCoded in Settings
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class Recipe(models.Model):
     """Recipe Object"""
     user = models.ForeignKey(  # Sets up a relationship between this model and another
@@ -55,6 +67,7 @@ class Recipe(models.Model):
     time_minutes = models.IntegerField()
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.CharField(blank=True, max_length=255)
+    tags = models.ManyToManyField('Tag')
 
     def __str__(self):
         return self.title
