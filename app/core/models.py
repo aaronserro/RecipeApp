@@ -68,7 +68,20 @@ class Recipe(models.Model):
     price = models.DecimalField(max_digits=5, decimal_places=2)
     link = models.CharField(blank=True, max_length=255)
     tags = models.ManyToManyField('Tag')
+    Ingredient = models.ManyToManyField('Ingredient')
 
     def __str__(self):
         return self.title
+
+
+class Ingredient(models.Model):
+    user = models.ForeignKey(  # Sets up a relationship between this model and another
+        settings.AUTH_USER_MODEL,  # HardCoded in Settings
+        on_delete=models.CASCADE,
+    )
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 
