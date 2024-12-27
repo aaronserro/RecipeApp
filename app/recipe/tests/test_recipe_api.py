@@ -7,7 +7,9 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from core.models import Recipe, Tag, Ingredient
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
-
+import tempfile
+import os
+from PIL import Image
 
 RECIPES_URL = reverse('recipe:recipe-list')
 
@@ -16,6 +18,10 @@ def detail_url(recipe_id):
     """Create and returna  recipe detail url"""
     return reverse('recipe:recipe-detail', args=[recipe_id])
 
+
+def image_upload_url(recipe_id):
+    """Create and return an image upload URL"""
+    return reverse('recipe:recipe-upload-image', args=[recipe_id])
 
 def create_recipe(user, **params):
     """Create and return a sample recipe"""
@@ -338,6 +344,90 @@ class PrivateRecipeApiTests(TestCase):
         res = self.client.patch(url, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.Ingredient.count(), 0)
+
+    def test_filter_by_tags(self):
+        """Test filtering recipes by tags"""
+        r1 = create_recipe(user=self.user, title='test')
+        r2 = create_recipe(user=self.user, title='test2')
+        tag1 = Tag.objects.create(user=self.user, name='testtag')
+        tag2 = Tag.objects.create(user=self.user, name='testtag2')
+        r1.tags.add(tag1)
+        r2.tags.add(tag2)
+        r3 = create_recipe(user=self.user, title='Fish and chips')
+        params = {'tags': f'{tag1.id},{tag2.id}'}
+        res = self.client.get(RECIPES_URL, params)
+
+        s1 = RecipeSerializer(r1)
+        s2 = RecipeSerializer(r2)
+        s3 = RecipeSerializer(r3)
+
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+    def test_filter_by_ingredients(self):
+        r1 = create_recipe(user=self.user, title='test')
+        r2 = create_recipe(user=self.user, title='test2')
+        in1 = Ingredient.objects.create(user=self.user, name='Feta Cheese')
+        in2 = Ingredient.objects.create(user=self.user, name='Chicken')
+        r1.Ingredient.add(in1)
+        r2.Ingredient.add(in2)
+        r3 = create_recipe(user=self.user, title='test3')
+        params = {'Ingredient': f'{in1.id},{in2.id}'}
+        res = self.client.get(RECIPES_URL, params)
+        s1 = RecipeSerializer(r1)
+        s2 = RecipeSerializer(r2)
+        s3 = RecipeSerializer(r3)
+        self.assertIn(s1.data, res.data)
+        self.assertIn(s2.data, res.data)
+        self.assertNotIn(s3.data, res.data)
+
+
+
+
+
+
+
+
+
+
+class ImageUploadTests(TestCase):
+    """Test for image upload API"""
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            'user@example.com',
+            'password123',
+        )
+        self.client.force_authenticate(self.user)
+        self.recipe = create_recipe(user=self.user)
+
+    def tearDown(self):
+        self.recipe.image.delete()
+
+    def test_upload_image(self):
+        """Test uploading an image to a recipe"""
+        url = image_upload_url(self.recipe.id)
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
+            img = Image.new('RGB', (10, 10))
+            img.save(image_file, format='JPEG')
+            image_file.seek(0)
+            payload = {'image': image_file}
+            res = self.client.post(url, payload, format='multipart')
+        self.recipe.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn('image', res.data)
+        self.assertTrue(os.path.exists(self.recipe.image.path))
+
+    def test_upload_image_bad_request(self):
+        """Test uploading invalid image"""
+        url = image_upload_url(self.recipe.id)
+        payload = {'image': 'notanimage'}
+        res = self.client.post(url, payload, format='multipart')
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 
