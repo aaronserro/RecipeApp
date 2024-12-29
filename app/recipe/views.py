@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
+
 from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
@@ -34,6 +35,10 @@ from recipe import serializers
         ]
     )
 )
+
+
+
+
 class RecipeViewSet(viewsets.ModelViewSet):
     """View for manage recipe APIs"""
     serializer_class = serializers.RecipeDetailSerializer
@@ -62,8 +67,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             user=self.request.user,
 
         ).order_by('-id').distinct()
-
-
 
     def get_serializer_class(self):
         """Retun the serializer class for request"""

@@ -18,13 +18,16 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 
 )
+from app.views import HomePageView
 
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
-
+from user.views import SignupPageView
 urlpatterns = [
+    path("", HomePageView.as_view(), name='home'),
+    path("signup", SignupPageView.as_view(), name='signup'),
     path('admin/', admin.site.urls),
     path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
     path(
